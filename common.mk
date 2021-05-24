@@ -11,20 +11,20 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
 $(call inherit-product-if-exists, vendor/xiaomi/sm6250-common/sm6250-common-vendor.mk)
 
 # Enable updating of APEXes
-$(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
+#$(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
 
 # Setup dalvik vm configs
 $(call inherit-product, frameworks/native/build/phone-xhdpi-4096-dalvik-heap.mk)
 
 # MiuiCamera
-$(call inherit-product-if-exists, vendor/xiaomi/miuicamera/config.mk)
+#$(call inherit-product-if-exists, vendor/xiaomi/miuicamera/config.mk)
 
 # AID/fs configs
 PRODUCT_PACKAGES += \
     fs_config_files
 
 # Apex
-$(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
+#$(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
 
 # API
 PRODUCT_SHIPPING_API_LEVEL := 29
@@ -113,8 +113,7 @@ TARGET_SCREEN_WIDTH := 1080
 
 # Camera
 PRODUCT_PACKAGES += \
-    libgui_vendor \
-    GCamGOPrebuilt
+    libgui_vendor
 
 PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-impl \
@@ -159,8 +158,8 @@ PRODUCT_PACKAGES += \
     android.hardware.drm@1.3-service.clearkey
 
 # Doze
-PRODUCT_PACKAGES += \
-    XiaomiDoze
+#PRODUCT_PACKAGES += \
+ #   XiaomiDoze
 
 # Fastbootd
 PRODUCT_PACKAGES += \
@@ -364,14 +363,14 @@ PRODUCT_SOONG_NAMESPACES += \
 PRODUCT_PACKAGES += \
     ims-ext-common \
     ims_ext_common.xml \
-    qti-telephony-hidl-wrapper \
-    qti_telephony_hidl_wrapper.xml \
-    qti-telephony-utils \
-    qti_telephony_utils.xml \
-    telephony-ext
+    #qti-telephony-hidl-wrapper \
+    #qti_telephony_hidl_wrapper.xml \
+    #qti-telephony-utils \
+    #qti_telephony_utils.xml \
+    #telephony-ext
 
-PRODUCT_BOOT_JARS += \
-    telephony-ext
+#PRODUCT_BOOT_JARS += \
+#    telephony-ext
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.ims.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.ims.xml \
@@ -447,15 +446,15 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.wifi.rtt.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.rtt.xml
 
 # WiFi Display
-PRODUCT_PACKAGES += \
-    libnl \
-    libwfdaac_vendor
+#PRODUCT_PACKAGES += \
+ #   libnl \
+  #  libwfdaac_vendor
 
-PRODUCT_BOOT_JARS += \
-    WfdCommon
+#PRODUCT_BOOT_JARS += \
+ #   WfdCommon
 
 # XiaomiParts
-PRODUCT_PACKAGES += \
-    XiaomiParts \
-    init.xiaomiparts.rc \
-    init.xiaomiparts.sh
+#PRODUCT_PACKAGES += \
+ #   XiaomiParts \
+  #  init.xiaomiparts.rc \
+   # init.xiaomiparts.sh
