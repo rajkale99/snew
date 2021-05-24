@@ -20,6 +20,7 @@
 #ifndef ANDROID_PACKAGES_MODULES_NEURALNETWORKS_SL_SUPPORT_LIBRARY_WRAPPER_H
 #define ANDROID_PACKAGES_MODULES_NEURALNETWORKS_SL_SUPPORT_LIBRARY_WRAPPER_H
 
+#include <android-base/unique_fd.h>
 #include <android/hardware_buffer.h>
 #include <math.h>
 #include <unistd.h>
@@ -99,6 +100,13 @@ class Memory {
             if (mMemory) {
                 mNnApi->ANeuralNetworksMemory_free(mMemory);
             }
+            if (mOwnedFd) {
+                close(*mOwnedFd);
+            }
+            if (mOwnedAHWB) {
+                AHardwareBuffer_release(mOwnedAHWB);
+            }
+
             mMemory = other.mMemory;
             mValid = other.mValid;
             mNnApi = other.mNnApi;
@@ -360,12 +368,41 @@ class Compilation {
                 mCompilation, static_cast<int32_t>(priority)));
     }
 
+    Result setTimeout(uint64_t durationNs) {
+        return static_cast<Result>(
+                mNnApi->ANeuralNetworksCompilation_setTimeout(mCompilation, durationNs));
+    }
+
     Result setCaching(const std::string& cacheDir, const std::vector<uint8_t>& token) {
         if (token.size() != ANEURALNETWORKS_BYTE_SIZE_OF_CACHE_TOKEN) {
             return Result::BAD_DATA;
         }
         return static_cast<Result>(mNnApi->ANeuralNetworksCompilation_setCaching(
                 mCompilation, cacheDir.c_str(), token.data()));
+    }
+
+    Result setCachingFromFds(const std::vector<int>& modelCacheFds,
+                             const std::vector<int>& dataCacheFds,
+                             const std::vector<uint8_t>& token) {
+        if (token.size() != ANEURALNETWORKS_BYTE_SIZE_OF_CACHE_TOKEN) {
+            return Result::BAD_DATA;
+        }
+        return static_cast<Result>(mNnApi->SL_ANeuralNetworksCompilation_setCachingFromFds(
+                mCompilation, modelCacheFds.data(), modelCacheFds.size(), dataCacheFds.data(),
+                dataCacheFds.size(), token.data()));
+    }
+
+    Result setCachingFromFds(const std::vector<base::unique_fd>& modelCacheOwnedFds,
+                             const std::vector<base::unique_fd>& dataCacheOwnedFds,
+                             const std::vector<uint8_t>& token) {
+        std::vector<int> modelCacheFds, dataCacheFds;
+        for (const auto& fd : modelCacheOwnedFds) {
+            modelCacheFds.push_back(fd.get());
+        }
+        for (const auto& fd : dataCacheOwnedFds) {
+            dataCacheFds.push_back(fd.get());
+        }
+        return setCachingFromFds(modelCacheFds, dataCacheFds, token);
     }
 
     Result finish() {
@@ -518,7 +555,7 @@ class Execution {
     // setComputeMode() can be used to change the behavior of compute() to
     // use the burst API
     // Returns the previous ComputeMode.
-    enum class ComputeMode { SYNC, BURST };
+    enum class ComputeMode { SYNC, BURST, FENCED };
     static ComputeMode setComputeMode(ComputeMode mode) {
         ComputeMode oldComputeMode = mComputeMode;
         mComputeMode = mode;
@@ -541,6 +578,18 @@ class Execution {
                 result = static_cast<Result>(
                         mNnApi->ANeuralNetworksExecution_burstCompute(mExecution, burst));
                 mNnApi->ANeuralNetworksBurst_free(burst);
+                return result;
+            }
+            case ComputeMode::FENCED: {
+                ANeuralNetworksEvent* event = nullptr;
+                Result result = static_cast<Result>(
+                        mNnApi->ANeuralNetworksExecution_startComputeWithDependencies(
+                                mExecution, nullptr, 0, 0, &event));
+                if (result != Result::NO_ERROR) {
+                    return result;
+                }
+                result = static_cast<Result>(mNnApi->ANeuralNetworksEvent_wait(event));
+                mNnApi->ANeuralNetworksEvent_free(event);
                 return result;
             }
         }

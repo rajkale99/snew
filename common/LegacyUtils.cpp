@@ -92,16 +92,27 @@ void initVLogMask() {
 }
 
 Duration makeTimeoutDuration(uint64_t nanoseconds) {
-    return Duration{nanoseconds};
+    constexpr auto kMaxCount = Duration::max().count();
+    using CommonType = std::common_type_t<Duration::rep, uint64_t>;
+    const auto count = std::min<CommonType>(kMaxCount, nanoseconds);
+    return Duration{static_cast<Duration::rep>(count)};
+}
+
+OptionalDuration makeTimeoutDuration(int64_t nanoseconds) {
+    CHECK_GE(nanoseconds, -1);
+    if (nanoseconds == -1) {
+        return OptionalDuration{};
+    }
+    return makeTimeoutDuration(static_cast<uint64_t>(nanoseconds));
 }
 
 TimePoint makeDeadline(Duration duration) {
-    const auto maxTime = TimePoint::max();
+    constexpr auto kMaxTime = TimePoint::max();
     const auto currentTime = Clock::now();
 
     // If there would be an overflow, use the max value.
-    if (duration > maxTime - currentTime) {
-        return maxTime;
+    if (duration > kMaxTime - currentTime) {
+        return kMaxTime;
     }
     return currentTime + duration;
 }
@@ -111,14 +122,6 @@ bool hasDeadlinePassed(const OptionalTimePoint& deadline) {
         return false;
     }
     return Clock::now() >= *deadline;
-}
-
-static OptionalTimePoint makeTimePoint(const TimePoint& deadline) {
-    return deadline;
-}
-
-OptionalTimePoint makeTimePoint(const OptionalTimePoint& deadline) {
-    return deadline.has_value() ? makeTimePoint(*deadline) : OptionalTimePoint{};
 }
 
 static bool isExtensionOperandType(int32_t type) {
@@ -385,14 +388,8 @@ bool tensorHasUnspecifiedDimensions(const Operand& operand) {
 }
 
 uint32_t alignBytesNeeded(uint32_t index, size_t length) {
-    uint32_t pattern;
-    if (length < 2) {
-        pattern = 0;  // No alignment necessary
-    } else if (length < 4) {
-        pattern = 1;  // Align on 2-byte boundary
-    } else {
-        pattern = 3;  // Align on 4-byte boundary
-    }
+    uint32_t alignment = getAlignmentForLength(length);
+    uint32_t pattern = alignment - 1;
     uint32_t extra = (~(index - 1)) & pattern;
     return extra;
 }

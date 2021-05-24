@@ -16,6 +16,7 @@
 
 #include "CanonicalBurst.h"
 
+#include <DefaultExecution.h>
 #include <android-base/logging.h>
 #include <nnapi/IBurst.h>
 #include <nnapi/IPreparedModel.h>
@@ -39,8 +40,16 @@ Burst::OptionalCacheHold Burst::cacheMemory(const SharedMemory& /*memory*/) cons
 }
 
 ExecutionResult<std::pair<std::vector<OutputShape>, Timing>> Burst::execute(
-        const Request& request, MeasureTiming measure) const {
-    return kPreparedModel->execute(request, measure, {}, {});
+        const Request& request, MeasureTiming measure, const nn::OptionalTimePoint& deadline,
+        const nn::OptionalDuration& loopTimeoutDuration) const {
+    return kPreparedModel->execute(request, measure, deadline, loopTimeoutDuration);
+}
+
+GeneralResult<SharedExecution> Burst::createReusableExecution(
+        const Request& request, MeasureTiming measure,
+        const nn::OptionalDuration& loopTimeoutDuration) const {
+    return std::make_shared<DefaultExecution>(kPreparedModel, request, measure,
+                                              loopTimeoutDuration);
 }
 
 }  // namespace android::nn::sample

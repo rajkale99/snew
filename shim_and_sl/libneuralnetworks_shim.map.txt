@@ -20,12 +20,15 @@
 
 LIBNEURALNETWORKS_SHIM {
   global:
-    ANeuralNetworksShim_registerSupportLibraryService; # llndk
-    ANeuralNetworksShimDeviceInfo_create; # llndk
-    ANeuralNetworksShimDeviceInfo_free; # llndk
-    ANeuralNetworksShimDeviceInfo_setCapabilities; # llndk
-    ANeuralNetworksShimDeviceInfo_setNumberOfCacheFilesNeeded; # llndk
-    ANeuralNetworksShimDeviceInfo_addVendorExtension; # llndk
+    ANeuralNetworksShim_registerSupportLibraryService; # llndk apex
+    ANeuralNetworksShimDeviceInfo_create; # llndk apex
+    ANeuralNetworksShimDeviceInfo_free; # llndk apex
+    ANeuralNetworksShimRegistrationParams_create; # llndk apex
+    ANeuralNetworksShimRegistrationParams_free; # llndk apex
+    ANeuralNetworksShimRegistrationParams_addDeviceInfo; # llndk apex
+    ANeuralNetworksShimRegistrationParams_setNumberOfListenerThreads; # llndk apex
+    ANeuralNetworksShimRegistrationParams_registerAsLazyService; # llndk apex
+    ANeuralNetworksShimRegistrationParams_fallbackToMinimumSupportDevice; # llndk apex
 
   local:
     *;
